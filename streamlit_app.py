@@ -50,17 +50,18 @@ if uploaded_file is not None:
             gdf.at[i, "NEIGHBORS_JPT_KOD_JE"] = ", ".join(neighbors_JPT_KOD_JE)
             my_bar.progress(i / len(gdf.index))
 
-            gdf = gdf.loc[
-                :,
-                [
-                    "JPT_KOD_JE",
-                    "JPT_NAZWA_",
-                    "geometry",
-                    "NEIGHBORS",
-                    "NEIGHBORS_JPT_KOD_JE",
-                ],
-            ]
-            st.session_state["gdf"] = gdf
+        gdf = gdf.loc[
+            :,
+            [
+                "JPT_KOD_JE",
+                "JPT_NAZWA_",
+                "geometry",
+                "NEIGHBORS",
+                "NEIGHBORS_JPT_KOD_JE",
+            ],
+        ]
+        st.session_state["gdf"] = gdf
+        st.caption("Rendering map. Please wait...")
 
     if "gdf_output" not in st.session_state:
         gdf_output = gdf.loc[
@@ -122,7 +123,7 @@ if uploaded_file is not None:
     if "region" not in st.session_state:
         region = "1405"
 
-    m.to_streamlit(1000, 1000)
+    m.to_streamlit()
 
     jpt_code = st.text_input(
         "Kod jednostki", "0510", on_change=region_fill, key="region"
