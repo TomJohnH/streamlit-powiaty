@@ -24,6 +24,13 @@ def convert_df(df):
     return df.to_csv().encode("utf-8")
 
 
+@st.cache(hash_funcs={leafmap.Map: hash})
+def expensive_chart(gdf):
+    m = leafmap.Map()
+    m.add_gdf(gdf, layer_name="JPT_NAZWA_")
+    return m
+
+
 uploaded_file = st.file_uploader("Choose a file [Powiaty.zip]")
 use_example_file = st.checkbox(
     "Use example file", False, help="Use direct download from GIS"
@@ -103,8 +110,7 @@ if uploaded_file is not None:
 
     # ----- Define map -----
 
-    m = leafmap.Map()
-    m.add_gdf(gdf, layer_name="JPT_NAZWA_")
+    # m = expensive_chart(gdf)
 
     # ----- Region Colour -----
 
@@ -113,7 +119,7 @@ if uploaded_file is not None:
 
     # st.write(st.session_state["r_no_col"])
 
-    m.add_gdf(
+    expensive_chart(gdf).add_gdf(
         gdf.loc[[st.session_state["r_no_col"]]],
         layer_name="Selected",
         fill_colors=["red"],
@@ -123,7 +129,7 @@ if uploaded_file is not None:
     if "region" not in st.session_state:
         region = "1405"
 
-    m.to_streamlit()
+    expensive_chart(gdf).to_streamlit()
 
     jpt_code = st.text_input(
         "Kod jednostki", "0510", on_change=region_fill, key="region"
