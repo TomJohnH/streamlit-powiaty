@@ -12,20 +12,20 @@ st.set_page_config(layout="wide")
 
 
 # @st.cache(allow_output_mutation=True)
-@st.experimental_memo
+@st.cache_data
 def get_data(file):
     geo_df = gpd.read_file(file)  # , rows=100)
     return geo_df
 
 
-@st.cache
+@st.cache_data
 def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return df.to_csv().encode("utf-8")
 
 
-@st.cache(hash_funcs={leafmap.Map: hash})
-def expensive_chart(gdf):
+@st.cache_resource
+def expensive_chart(_gdf):
     m = leafmap.Map()
     m.add_gdf(gdf, layer_name="JPT_NAZWA_")
     return m
@@ -48,26 +48,27 @@ if uploaded_file is not None:
     if "gdf" not in st.session_state:
         gdf = get_data(uploaded_file)
         my_bar = st.progress(0)
-        for i in range(len(gdf.index)):
-            print(i)
-            current_disjoint = ~gdf.geometry.disjoint(gdf.geometry[i])
-            neighbors = gdf[current_disjoint].JPT_NAZWA_.tolist()
-            neighbors_JPT_KOD_JE = gdf[current_disjoint].JPT_KOD_JE.tolist()
-            gdf.at[i, "NEIGHBORS"] = ", ".join(neighbors)
-            gdf.at[i, "NEIGHBORS_JPT_KOD_JE"] = ", ".join(neighbors_JPT_KOD_JE)
-            my_bar.progress(i / len(gdf.index))
+        if "gdf" not in st.session_state:
+            for i in range(len(gdf.index)):
+                print(i)
+                current_disjoint = ~gdf.geometry.disjoint(gdf.geometry[i])
+                neighbors = gdf[current_disjoint].JPT_NAZWA_.tolist()
+                neighbors_JPT_KOD_JE = gdf[current_disjoint].JPT_KOD_JE.tolist()
+                gdf.at[i, "NEIGHBORS"] = ", ".join(neighbors)
+                gdf.at[i, "NEIGHBORS_JPT_KOD_JE"] = ", ".join(neighbors_JPT_KOD_JE)
+                my_bar.progress(i / len(gdf.index))
 
-        gdf = gdf.loc[
-            :,
-            [
-                "JPT_KOD_JE",
-                "JPT_NAZWA_",
-                "geometry",
-                "NEIGHBORS",
-                "NEIGHBORS_JPT_KOD_JE",
-            ],
-        ]
-        st.session_state["gdf"] = gdf
+            gdf = gdf.loc[
+                :,
+                [
+                    "JPT_KOD_JE",
+                    "JPT_NAZWA_",
+                    "geometry",
+                    "NEIGHBORS",
+                    "NEIGHBORS_JPT_KOD_JE",
+                ],
+            ]
+            st.session_state["gdf"] = gdf
         st.caption("Rendering map. Please wait...")
 
     if "gdf_output" not in st.session_state:
